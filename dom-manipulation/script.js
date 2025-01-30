@@ -49,6 +49,105 @@ newQuoteButton.addEventListener('click', () => {
     showRandomQuote(filteredQuotes);
 });
 
+// ... (previous code) ...
+
+// Mock API endpoint for quotes (using JSONPlaceholder for simulation)
+const API_URL = 'https://jsonplaceholder.typicode.com/posts';
+
+let lastSync = 0; // Timestamp for last sync operation
+
+// Function to simulate server interaction
+async function syncWithServer() {
+    try {
+        const response = await fetch(API_URL);
+        const serverQuotes = await response.json();
+
+        // Convert server data to our quote format
+        const serverQuoteObjects = serverQuotes.map(item => ({
+            text: item.title,
+            category: item.body.split(' ')[0] || 'Unknown' // Use first word of body as category for simulation
+        }));
+
+        // Simple conflict resolution: Server data always takes precedence over local data
+        const resolvedQuotes = resolveConflicts(quotes, serverQuoteObjects);
+        quotes = resolvedQuotes;
+        saveQuotes();
+        updateSyncStatus("Data synced successfully with server.");
+    } catch (error) {
+        updateSyncStatus("Error syncing with server: " + error.message);
+    }
+}
+
+// Function to resolve conflicts (simple strategy: server data wins)
+function resolveConflicts(localQuotes, serverQuotes) {
+    // This is a naive approach where server data replaces local data entirely. 
+    // In real scenarios, you might compare each quote for more nuanced merging.
+    return serverQuotes;
+}
+
+// Function to update sync status on UI
+function updateSyncStatus(message) {
+    const statusDiv = document.getElementById('syncStatus');
+    statusDiv.textContent = message;
+    if (message.includes('conflict')) {
+        document.getElementById('manualResolve').style.display = 'block';
+    } else {
+        document.getElementById('manualResolve').style.display = 'none';
+    }
+}
+
+// Manual conflict resolution (placeholder for UI interaction)
+function manualResolve() {
+    alert("Manual resolution would involve a UI where users can decide on each conflict. Here, we'll just simulate merging.");
+    // Here you would show a UI for manual merging, but for simplicity:
+    syncWithServer(); // Re-fetch to simulate manual resolution
+}
+
+// Periodic sync (every 10 seconds for demonstration)
+setInterval(() => {
+    syncWithServer();
+}, 10000); // 10 seconds
+
+// When adding a new quote, we'll also push it to the server
+function addQuote() {
+    const quoteText = document.getElementById('newQuoteText').value;
+    const quoteCategory = document.getElementById('newQuoteCategory').value;
+
+    if (quoteText && quoteCategory) {
+        const newQuote = { text: quoteText, category: quoteCategory };
+        quotes.push(newQuote);
+        saveQuotes();
+        
+        // Push to server simulation
+        fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: quoteText,
+                body: quoteCategory
+            })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }).then(data => {
+            console.log('Success:', data);
+            populateCategories(); // Update categories after addition
+            filterQuotes(); // Refresh display
+        }).catch(error => {
+            console.error('Error:', error);
+            updateSyncStatus("Failed to sync new quote to server");
+        });
+
+    } else {
+        alert('Please enter both a quote and a category.');
+    }
+}
+
+// ... (rest of the JavaScript code) ...
 // Function to add a new quote to the array and update storage
 function addQuote() {
     const quoteText = document.getElementById('newQuoteText').value;
@@ -109,3 +208,4 @@ function importFromJsonFile(event) {
 
 // Load quotes when the page initializes
 loadQuotes();
+
