@@ -122,7 +122,7 @@ async function syncQuotes() {
         const resolvedQuotes = resolveConflicts(quotes, serverQuotes);
         quotes = resolvedQuotes;
         saveQuotes();
-        updateSyncStatus("Quotes synced successfully with server.");
+        updateSyncStatus("Quotes synced with server!");
         return true; // Sync was successful
     } catch (error) {
         updateSyncStatus("Error syncing quotes with server: " + error.message);
