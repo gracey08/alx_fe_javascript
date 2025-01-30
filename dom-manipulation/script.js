@@ -115,18 +115,18 @@ async function fetchQuotesFromServer() {
     }
 }
 
-// Function to simulate server interaction
-async function syncWithServer() {
+// Function to sync local quotes with server data
+async function syncQuotes() {
     try {
         const serverQuotes = await fetchQuotesFromServer();
-
-        // Simple conflict resolution: Server data always takes precedence over local data
         const resolvedQuotes = resolveConflicts(quotes, serverQuotes);
         quotes = resolvedQuotes;
         saveQuotes();
-        updateSyncStatus("Data synced successfully with server.");
+        updateSyncStatus("Quotes synced successfully with server.");
+        return true; // Sync was successful
     } catch (error) {
-        updateSyncStatus("Error syncing with server: " + error.message);
+        updateSyncStatus("Error syncing quotes with server: " + error.message);
+        return false; // Sync failed
     }
 }
 
@@ -152,12 +152,12 @@ function updateSyncStatus(message) {
 function manualResolve() {
     alert("Manual resolution would involve a UI where users can decide on each conflict. Here, we'll just simulate merging.");
     // Here you would show a UI for manual merging, but for simplicity:
-    syncWithServer(); // Re-fetch to simulate manual resolution
+    syncQuotes(); // Re-fetch to simulate manual resolution
 }
 
 // Periodic sync (every 10 seconds for demonstration)
 setInterval(() => {
-    syncWithServer();
+    syncQuotes();
 }, 10000); // 10 seconds
 
 // When adding a new quote, we'll also push it to the server
@@ -189,6 +189,7 @@ function addQuote() {
             console.log('Success:', data);
             populateCategories(); // Update categories after addition
             filterQuotes(); // Refresh display
+            syncQuotes(); // Sync after adding a quote
         }).catch(error => {
             console.error('Error:', error);
             updateSyncStatus("Failed to sync new quote to server");
